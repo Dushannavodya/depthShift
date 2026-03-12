@@ -3,21 +3,21 @@ export const LOCAL_AIR_JORDAN_MODEL = `${import.meta.env.BASE_URL}models/airJord
 export const DEFAULT_CALIBRATION = Object.freeze({
   screenWidth: 0.53,
   screenHeight: 0.3,
-  defaultViewingDistance: 0.62,
-  roomDepth: 2.6,
+  defaultViewingDistance: 1,
+  roomDepth: 1.2,
   gridDensity: 10,
-  smoothing: 0.88,
-  frustumSensitivity: 1,
-  horizontalSensitivity: 1.24,
-  verticalSensitivity: 1.18,
+  smoothing: 0.1,
+  frustumSensitivity: 1.8,
+  horizontalSensitivity: 1.7,
+  verticalSensitivity: 2,
   depthSensitivity: 0.08,
-  maxHeadX: 0.22,
-  maxHeadY: 0.16,
+  maxHeadX: 0.38,
+  maxHeadY: 0.3,
   minHeadZ: 0.38,
   maxHeadZ: 1.3,
-  objectForwardOffset: 0.42,
-  objectScale: 0.92,
-  popOutAmount: 0.04
+  objectForwardOffset: 0.1,
+  objectScale: 0.65,
+  popOutAmount: 0.13
 })
 
 export const REFERENCE_PRESET = Object.freeze({

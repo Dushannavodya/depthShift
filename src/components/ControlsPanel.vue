@@ -15,7 +15,7 @@
         <h1>Head-Tracked Window</h1>
       </div>
       <div class="header-actions">
-        <button class="primary" type="button" @click="$emit('toggle-fullscreen')">
+        <button class="primary" type="button" @click="handleFullscreenClick">
           {{ fullscreenActive ? 'Leave Fullscreen' : 'Fullscreen' }}
         </button>
         <button class="ghost mobile-close" type="button" @click="closeMobilePanel">
@@ -279,6 +279,11 @@ function toggleMobilePanel() {
   }
 }
 
+function handleFullscreenClick() {
+  emit('toggle-fullscreen')
+  closeMobilePanel()
+}
+
 function closeMobilePanel() {
   if (mediaQuery?.matches) {
     mobileOpen.value = false
@@ -480,7 +485,15 @@ footer {
 
 @media (max-width: 768px) {
   .mobile-panel-toggle {
-    display: flex;
+    display: inline-flex;
+    left: auto;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    min-height: 38px;
+    padding: 0.55rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    line-height: 1;
   }
 
   .controls-panel {
@@ -514,6 +527,7 @@ footer {
   .header-actions {
     display: grid;
     grid-template-columns: 1fr auto;
+    gap: 0.5rem;
   }
 
   .mobile-close {

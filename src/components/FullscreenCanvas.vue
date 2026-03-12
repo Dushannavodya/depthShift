@@ -2,13 +2,14 @@
   <section ref="hostRef" class="canvas-shell">
     <div ref="canvasMountRef" class="canvas-mount"></div>
 
-    <button class="floating-fullscreen" type="button" @click="toggleFullscreen">
+    <button v-if="fullscreenSupported" class="floating-fullscreen" type="button" @click="toggleFullscreen">
       {{ fullscreenActive ? 'Leave Fullscreen' : 'Fullscreen' }}
     </button>
 
     <div class="status-card" :class="trackingStateClass">
+      <span class="status-icon" aria-hidden="true"></span>
       <strong>{{ trackingLabel }}</strong>
-      <span>{{ statusMessage }}</span>
+      <span class="status-detail">{{ statusMessage }}</span>
     </div>
 
     <div class="hint-card" v-if="hintCardsEnabled && !trackingEnabled">
@@ -73,6 +74,7 @@ const canvasMountRef = ref(null)
 const faceMeshCanvasRef = ref(null)
 const modelSourceRef = computed(() => props.modelSource)
 const fullscreenActive = ref(false)
+const fullscreenSupported = ref(false)
 
 const { debug, error, isRunning, latestLandmarks, smoothedHead, start, status, stop, videoElement } = useFaceTracking(props.settings)
 const { fallbackEye, frustumDebug, updateOffAxisCamera } = useOffAxisCamera()
@@ -204,16 +206,35 @@ async function syncTracking() {
 }
 
 async function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    await hostRef.value?.requestFullscreen()
+  const host = hostRef.value
+  if (!host || !fullscreenSupported.value) {
     return
   }
 
-  await document.exitFullscreen()
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    if (host.requestFullscreen) {
+      await host.requestFullscreen()
+      return
+    }
+
+    if (host.webkitRequestFullscreen) {
+      await host.webkitRequestFullscreen()
+    }
+    return
+  }
+
+  if (document.exitFullscreen) {
+    await document.exitFullscreen()
+    return
+  }
+
+  if (document.webkitExitFullscreen) {
+    await document.webkitExitFullscreen()
+  }
 }
 
 function handleFullscreenChange() {
-  fullscreenActive.value = document.fullscreenElement === hostRef.value
+  fullscreenActive.value = document.fullscreenElement === hostRef.value || document.webkitFullscreenElement === hostRef.value
   emit('fullscreen-change', fullscreenActive.value)
 }
 
@@ -241,11 +262,19 @@ watch([status, trackingError, modelError], () => {
 onMounted(() => {
   init(renderFrame)
   syncTracking()
+  fullscreenSupported.value = Boolean(
+    hostRef.value?.requestFullscreen ||
+    hostRef.value?.webkitRequestFullscreen ||
+    document.exitFullscreen ||
+    document.webkitExitFullscreen
+  )
   document.addEventListener('fullscreenchange', handleFullscreenChange)
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
   stop()
 })
 
@@ -305,6 +334,14 @@ defineExpose({
 .status-card {
   bottom: 1.2rem;
   border: 1px solid rgba(123, 198, 255, 0.18);
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.35rem 0.7rem;
+  width: auto;
+  max-width: min(520px, calc(100vw - 10rem));
+  padding: 0.75rem 0.95rem;
+  border-radius: 999px;
+  text-align: left;
 }
 
 .hint-card {
@@ -323,13 +360,41 @@ defineExpose({
   font-size: 0.84rem;
 }
 
+.status-card .status-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: #7bc6ff;
+  box-shadow: 0 0 16px rgba(123, 198, 255, 0.45);
+}
+
+.status-card .status-detail {
+  grid-column: 2;
+}
+
 .status-card.tracking {
   border-color: rgba(111, 214, 172, 0.3);
+}
+
+.status-card.tracking .status-icon {
+  background: #6fd6ac;
+  box-shadow: 0 0 16px rgba(111, 214, 172, 0.45);
+}
+
+.status-card.searching .status-icon,
+.status-card.loading .status-icon {
+  background: #ffb15b;
+  box-shadow: 0 0 16px rgba(255, 177, 91, 0.45);
 }
 
 .status-card.error,
 .hint-card.error {
   border-color: rgba(255, 122, 122, 0.34);
+}
+
+.status-card.error .status-icon {
+  background: #ff7a7a;
+  box-shadow: 0 0 16px rgba(255, 122, 122, 0.45);
 }
 
 .tracking-video {
@@ -393,31 +458,57 @@ defineExpose({
     right: 0.75rem;
     top: 0.75rem;
     bottom: auto;
-    min-height: 42px;
-    padding: 0.72rem 1rem;
+    min-height: 38px;
+    padding: 0.58rem 0.9rem;
+    font-size: 0.78rem;
   }
 
   .status-card,
   .hint-card {
-    width: calc(100vw - 1.5rem);
+    width: auto;
+    max-width: calc(100vw - 8.25rem);
     left: 0.75rem;
     transform: none;
-    padding: 0.85rem 1rem;
-    border-radius: 16px;
+    padding: 0.65rem 0.8rem;
+    border-radius: 999px;
   }
 
   .status-card {
-    bottom: calc(min(58vh, 560px) + 1.7rem);
+    top: 0.75rem;
+    bottom: auto;
+    display: inline-grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    min-height: 38px;
   }
 
   .hint-card {
-    bottom: calc(min(58vh, 560px) + 6rem);
+    top: 3.75rem;
+    bottom: auto;
+    max-width: calc(100vw - 1.5rem);
+    border-radius: 14px;
+  }
+
+  .status-card strong {
+    font-size: 0.78rem;
+  }
+
+  .status-card .status-detail {
+    display: none;
+  }
+
+  .hint-card strong {
+    font-size: 0.82rem;
+  }
+
+  .hint-card span {
+    font-size: 0.74rem;
   }
 
   .face-view-shell {
     left: 0.75rem;
     right: auto;
-    top: 0.75rem;
+    top: 6.8rem;
     bottom: auto;
     width: min(150px, 34vw);
     border-radius: 14px;

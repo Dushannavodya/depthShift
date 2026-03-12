@@ -65,10 +65,10 @@ const STORAGE_KEY = 'depthshift:custom-preset:v1'
 
 const canvasRef = ref(null)
 const autoRotateEnabled = ref(false)
-const debugEnabled = ref(true)
-const faceViewEnabled = ref(false)
+const debugEnabled = ref(false)
+const faceViewEnabled = ref(true)
 const fullscreenActive = ref(false)
-const hintCardsEnabled = ref(true)
+const hintCardsEnabled = ref(false)
 const trackingEnabled = ref(false)
 const wireframeEnabled = ref(true)
 const isBooting = ref(true)
