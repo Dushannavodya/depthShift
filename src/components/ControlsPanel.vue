@@ -1,13 +1,27 @@
 <template>
-  <section class="controls-panel">
+  <button
+    class="mobile-panel-toggle"
+    :aria-expanded="mobileOpen ? 'true' : 'false'"
+    type="button"
+    @click="toggleMobilePanel"
+  >
+    {{ mobileOpen ? 'Hide Controls' : 'Show Controls' }}
+  </button>
+
+  <section class="controls-panel" :class="{ 'is-mobile-open': mobileOpen, 'is-mobile-closed': !mobileOpen }">
     <header>
       <div>
         <p class="eyebrow">DepthShift</p>
         <h1>Head-Tracked Window</h1>
       </div>
-      <button class="primary" type="button" @click="$emit('toggle-fullscreen')">
-        {{ fullscreenActive ? 'Leave Fullscreen' : 'Fullscreen' }}
-      </button>
+      <div class="header-actions">
+        <button class="primary" type="button" @click="$emit('toggle-fullscreen')">
+          {{ fullscreenActive ? 'Leave Fullscreen' : 'Fullscreen' }}
+        </button>
+        <button class="ghost mobile-close" type="button" @click="closeMobilePanel">
+          Close
+        </button>
+      </div>
     </header>
 
     <p class="summary">
@@ -192,6 +206,8 @@
 </template>
 
 <script setup>
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+
 defineProps({
   autoRotateEnabled: Boolean,
   debugEnabled: Boolean,
@@ -248,9 +264,54 @@ function patch(key, value) {
     emit('patch-settings', { [key]: parsed })
   }
 }
+
+const mobileOpen = ref(false)
+let mediaQuery
+
+function syncMobilePanel(event) {
+  const matches = event?.matches ?? mediaQuery?.matches ?? false
+  mobileOpen.value = !matches
+}
+
+function toggleMobilePanel() {
+  if (mediaQuery?.matches) {
+    mobileOpen.value = !mobileOpen.value
+  }
+}
+
+function closeMobilePanel() {
+  if (mediaQuery?.matches) {
+    mobileOpen.value = false
+  }
+}
+
+onMounted(() => {
+  mediaQuery = window.matchMedia('(max-width: 768px)')
+  syncMobilePanel()
+  mediaQuery.addEventListener('change', syncMobilePanel)
+})
+
+onBeforeUnmount(() => {
+  mediaQuery?.removeEventListener('change', syncMobilePanel)
+})
 </script>
 
 <style scoped>
+.mobile-panel-toggle {
+  position: absolute;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: 0.9rem;
+  z-index: 10;
+  display: none;
+  justify-content: center;
+  font-weight: 700;
+  background: linear-gradient(135deg, rgba(246, 197, 108, 0.96), rgba(255, 156, 88, 0.96));
+  color: #08111b;
+  border-color: transparent;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
 .controls-panel {
   position: absolute;
   left: 1.25rem;
@@ -265,6 +326,9 @@ function patch(key, value) {
   background: rgba(7, 16, 25, 0.84);
   backdrop-filter: blur(20px);
   box-shadow: 0 20px 80px rgba(0, 0, 0, 0.35);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 header,
@@ -273,6 +337,16 @@ header,
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.mobile-close {
+  display: none;
 }
 
 .eyebrow {
@@ -405,19 +479,46 @@ footer {
 }
 
 @media (max-width: 768px) {
+  .mobile-panel-toggle {
+    display: flex;
+  }
+
   .controls-panel {
     left: 0.75rem;
     right: 0.75rem;
     top: auto;
     bottom: 0.75rem;
     width: auto;
-    max-height: min(58vh, 560px);
+    max-height: min(72vh, 640px);
     padding: 0.95rem;
     border-radius: 20px;
+    transition: transform 180ms ease, opacity 180ms ease;
+  }
+
+  .controls-panel.is-mobile-closed {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(calc(100% + 1rem));
+  }
+
+  .controls-panel.is-mobile-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
   }
 
   header {
     align-items: stretch;
+  }
+
+  .header-actions {
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+
+  .mobile-close {
+    display: inline-flex;
+    justify-content: center;
   }
 
   .control-grid {
