@@ -59,7 +59,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import ControlsPanel from './components/ControlsPanel.vue'
 import FullscreenCanvas from './components/FullscreenCanvas.vue'
-import { createDefaultCalibration, createReferenceCalibration, SAMPLE_MODELS, sanitizeCalibration } from './utils/calibration'
+import { createDefaultCalibration, createReferenceCalibration, LOCAL_AIR_JORDAN_MODEL, SAMPLE_MODELS, sanitizeCalibration } from './utils/calibration'
 
 const STORAGE_KEY = 'depthshift:custom-preset:v1'
 
@@ -85,6 +85,10 @@ const trackingInfo = ref({
 const selectedModelOption = ref('local')
 const sampleModels = SAMPLE_MODELS
 const modelSource = ref(SAMPLE_MODELS.find((option) => option.id === 'local')?.value || '')
+const legacyLocalModelPaths = new Set([
+  '/models/airJordan.glb',
+  'models/airJordan.glb'
+])
 
 const trackingLabel = computed(() => {
   const status = trackingInfo.value.status
@@ -177,6 +181,9 @@ function loadSavedPreset() {
     const saved = JSON.parse(raw)
     Object.assign(settings, sanitizeCalibration(saved.settings || {}))
     modelSource.value = typeof saved.modelSource === 'string' ? saved.modelSource : modelSource.value
+    if (legacyLocalModelPaths.has(modelSource.value)) {
+      modelSource.value = LOCAL_AIR_JORDAN_MODEL
+    }
     selectedModelOption.value = typeof saved.selectedModelOption === 'string' ? saved.selectedModelOption : selectedModelOption.value
     autoRotateEnabled.value = Boolean(saved.autoRotateEnabled)
     debugEnabled.value = saved.debugEnabled !== false

@@ -1,3 +1,5 @@
+export const LOCAL_AIR_JORDAN_MODEL = `${import.meta.env.BASE_URL}models/airJordan.glb`
+
 export const DEFAULT_CALIBRATION = Object.freeze({
   screenWidth: 0.53,
   screenHeight: 0.3,
@@ -41,7 +43,7 @@ export const SAMPLE_MODELS = [
   {
     id: 'local',
     label: 'Air Jordan',
-    value: '/models/airJordan.glb'
+    value: LOCAL_AIR_JORDAN_MODEL
   },
   {
     id: 'external',
